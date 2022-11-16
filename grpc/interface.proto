@@ -5,8 +5,8 @@ option go_package = "https://github.com/suvihanninen/DistributedAuctionSystem;au
 
 
 service Auction {
-    rpc bid (SetBid) returns (AckBid) {}
-    rpc result (GetResult) returns (ReturnResult) {}
+    rpc Bid (SetBid) returns (AckBid) {}
+    rpc Result (GetResult) returns (ReturnResult) {}
 }
 
 message SetBid {

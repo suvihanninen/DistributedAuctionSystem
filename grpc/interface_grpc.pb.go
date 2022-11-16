@@ -36,7 +36,7 @@ func NewAuctionClient(cc grpc.ClientConnInterface) AuctionClient {
 
 func (c *auctionClient) Bid(ctx context.Context, in *SetBid, opts ...grpc.CallOption) (*AckBid, error) {
 	out := new(AckBid)
-	err := c.cc.Invoke(ctx, "/auction.Auction/bid", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/auction.Auction/Bid", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -45,7 +45,7 @@ func (c *auctionClient) Bid(ctx context.Context, in *SetBid, opts ...grpc.CallOp
 
 func (c *auctionClient) Result(ctx context.Context, in *GetResult, opts ...grpc.CallOption) (*ReturnResult, error) {
 	out := new(ReturnResult)
-	err := c.cc.Invoke(ctx, "/auction.Auction/result", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/auction.Auction/Result", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +94,7 @@ func _Auction_Bid_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/auction.Auction/bid",
+		FullMethod: "/auction.Auction/Bid",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuctionServer).Bid(ctx, req.(*SetBid))
@@ -112,7 +112,7 @@ func _Auction_Result_Handler(srv interface{}, ctx context.Context, dec func(inte
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/auction.Auction/result",
+		FullMethod: "/auction.Auction/Result",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(AuctionServer).Result(ctx, req.(*GetResult))
@@ -128,11 +128,11 @@ var Auction_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*AuctionServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "bid",
+			MethodName: "Bid",
 			Handler:    _Auction_Bid_Handler,
 		},
 		{
-			MethodName: "result",
+			MethodName: "Result",
 			Handler:    _Auction_Result_Handler,
 		},
 	},
