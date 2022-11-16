@@ -1,0 +1,26 @@
+syntax = "proto3";
+
+package auction;
+option go_package = "https://github.com/suvihanninen/DistributedAuctionSystem;auction";
+
+
+service Auction {
+    rpc bid (SetBid) returns (AckBid) {}
+    rpc result (GetResult) returns (ReturnResult) {}
+}
+
+message SetBid {
+    int32 amount = 1;
+}
+
+message AckBid {
+    string acknowledgement = 1; //success, fail, exception
+}
+
+message GetResult {
+   
+}
+
+message ReturnResult {
+    int32 outcome = 1;
+}
