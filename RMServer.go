@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"strconv"
+	"time"
 
 	auction "github.com/suvihanninen/DistributedAuctionSystem/grpc"
 	"google.golang.org/grpc"
@@ -14,11 +15,12 @@ import (
 
 type RMServer struct {
 	auction.UnimplementedAuctionServer
-	id           int32
-	peers        map[int32]auction.AuctionClient
-	isPrimary    bool
-	ctx          context.Context
+	id         int32
+	peers      map[int32]auction.AuctionClient
+	isPrimary  bool
+	ctx        context.Context
 	highestBid int32
+	time       time.Time
 }
 
 func main() {
@@ -30,11 +32,12 @@ func main() {
 	defer cancel()
 
 	rmServer := &RMServer{
-		id:           ownPort,
-		peers:        make(map[int32]auction.AuctionClient),
-		ctx:          ctx,
-		isPrimary: 	primary,
+		id:         ownPort,
+		peers:      make(map[int32]auction.AuctionClient),
+		ctx:        ctx,
+		isPrimary:  primary,
 		highestBid: 0,
+		time:       time.Now().Local().Add(time.Second * time.Duration(60)),
 	}
 
 	//Primary needs to listen so that replica managers can ask if it's alive
@@ -52,14 +55,14 @@ func main() {
 	}()
 
 	// If server is primary, dial to all other replica managers
-	if (rmServer.isPrimary) {
+	if rmServer.isPrimary {
 		for i := 0; i < 3; i++ {
 			port := int32(5001) + int32(i)
-	
+
 			if port == ownPort {
 				continue
 			}
-	
+
 			var conn *grpc.ClientConn
 			log.Printf("Trying to dial: %v\n", port)
 			conn, err := grpc.Dial(fmt.Sprintf(":%v", port), grpc.WithInsecure(), grpc.WithBlock()) //This is going to wait until it receives the connection
@@ -71,10 +74,14 @@ func main() {
 			rmServer.peers[port] = c
 		}
 	} else {
-		for {}
+		for {
+
+		}
 		// implement dialing here if we have to implement heartbeats
 	}
-	for {}
+	for {
+
+	}
 	// if rmServer.isPrimary {
 
 	// 	scanner := bufio.NewScanner(os.Stdin)
@@ -93,11 +100,8 @@ func main() {
 	// 		log.Println("Outcome inside main: ", outcome)
 	// 	}
 	// }
-	
 
 }
-
-
 
 func (RM *RMServer) Bid(ctx context.Context, SetBid *auction.SetBid) (*auction.AckBid, error) {
 	outcome, err := RM.updateBidToRm(SetBid.GetAmount())
@@ -110,10 +114,13 @@ func (RM *RMServer) Bid(ctx context.Context, SetBid *auction.SetBid) (*auction.A
 
 func (rm *RMServer) updateBidToRm(amount int32) (string, error) {
 	numOfFailures := 0
+	if time.Now().After(rm.time) {
+		return "Time is out", nil
+	}
 	if amount > rm.highestBid {
 		rm.highestBid = amount
 		updatedBid := &auction.SetBid{Amount: int32(amount)}
-		
+
 		//Broadcasting updated bid to all replica managers
 		for id, rmServer := range rm.peers {
 			//Reconsider how to handle a potentially crashed replica manager
@@ -123,20 +130,27 @@ func (rm *RMServer) updateBidToRm(amount int32) (string, error) {
 				delete(rm.peers, id)
 				numOfFailures++
 			}
-			
+
 			log.Printf("Bid was updated to replica manager with ID: %s", ack)
-		} 		
+		}
 	} else {
-		return "failure", nil
+		return "Failure", nil
 	}
 
-	if numOfFailures >1 {
-		return "exception", nil
+	if numOfFailures > 1 {
+		return "Exception", nil
 	}
 
-	return "success", nil
+	return "Success", nil
 }
 
 func (RM *RMServer) Result(ctx context.Context, GetResult *auction.GetResult) (*auction.ReturnResult, error) {
-	return &auction.ReturnResult{Outcome: 10}, nil
+	message := ""
+	if time.Now().After(RM.time) {
+		message = "Time is out"
+	} else {
+		message = "Time is not out"
+	}
+	println("Outcome inside Result: ", RM.highestBid)
+	return &auction.ReturnResult{Outcome: RM.highestBid, Message: message}, nil
 }

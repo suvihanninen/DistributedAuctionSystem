@@ -24,4 +24,5 @@ message GetResult {
 
 message ReturnResult {
     int32 outcome = 1;
+    string message = 2;
 }
