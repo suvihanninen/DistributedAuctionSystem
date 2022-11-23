@@ -14,8 +14,8 @@ import (
 type FEServer struct {
 	auction.UnimplementedAuctionServer        // You need this line if you have a server
 	port                               string // Not required but useful if your server needs to know what port it's listening to
-	primaryServer auction.AuctionClient
-	ctx context.Context
+	primaryServer                      auction.AuctionClient
+	ctx                                context.Context
 }
 
 /*
@@ -39,9 +39,9 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	server := &FEServer{
-		port: os.Args[1],
+		port:          os.Args[1],
 		primaryServer: nil,
-		ctx: ctx,
+		ctx:           ctx,
 	}
 
 	auction.RegisterAuctionServer(grpcServer, server) //Registers the server to the gRPC server.
@@ -52,12 +52,11 @@ func main() {
 			log.Fatalf("failed to serve %v", err)
 		}
 	}()
-	
 
 	serverToDial := 5001
 	conn := server.DialToPR(serverToDial)
 	defer conn.Close()
-	
+
 	// scanner := bufio.NewScanner(os.Stdin)
 	// for {
 	// 	log.Println("Enter a bid: ")
@@ -73,11 +72,12 @@ func main() {
 	// 	}
 	// 	log.Println("Outcome inside main: ", outcome)
 	// }
-	for{}
+	for {
+	}
 
 }
 
-func (FE *FEServer) DialToPR(serverToDial int) (*grpc.ClientConn) {
+func (FE *FEServer) DialToPR(serverToDial int) *grpc.ClientConn {
 	//Dialing to the primary replica manager
 	portToDial := ":" + strconv.Itoa(serverToDial)
 	connection, err := grpc.Dial(portToDial, grpc.WithInsecure())
@@ -92,7 +92,7 @@ func (FE *FEServer) DialToPR(serverToDial int) (*grpc.ClientConn) {
 
 func (FE *FEServer) Bid(ctx context.Context, SetBid *auction.SetBid) (*auction.AckBid, error) {
 	log.Println("bid inside FEserver: ", SetBid)
-	outcome, err :=FE.primaryServer.Bid(ctx, SetBid)
+	outcome, err := FE.primaryServer.Bid(ctx, SetBid)
 	if err != nil {
 		log.Fatalf("bid failed inside FEServer: %s", err)
 	}
@@ -101,5 +101,11 @@ func (FE *FEServer) Bid(ctx context.Context, SetBid *auction.SetBid) (*auction.A
 }
 
 func (FE *FEServer) Result(ctx context.Context, GetResult *auction.GetResult) (*auction.ReturnResult, error) {
-	return &auction.ReturnResult{Outcome: 10}, nil
+	log.Println("Inside FEServer Result getting outcome")
+	outcome, err := FE.primaryServer.Result(ctx, GetResult)
+	if err != nil {
+		log.Fatalf("result fetching failed inside FEServer: %s", err)
+	}
+
+	return outcome, nil
 }
