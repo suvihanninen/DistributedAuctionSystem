@@ -21,13 +21,14 @@ func main() {
 		save the most resent result
 		If client looses the connection to a FEServer we need to Dial to the next one
 	*/
-	port := os.Args[1] //we give a portnumber where it can dial to
+	port := ":" + os.Args[1] //we give a portnumber where it can dial to
+	
 	connection, err := grpc.Dial(port, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Unable to connect: %v", err)
 	}
 
-	server := auction.NewAuctionClient(connection) //creates a new client
+	server := auction.NewAuctionClient(connection) 
 	ServerConn = connection
 	defer ServerConn.Close()
 
@@ -56,8 +57,7 @@ func main() {
 
 				ack, err := server.Bid(context.Background(), bid)
 				if err != nil {
-					log.Printf("Bid failed:")
-					log.Println(err)
+					log.Println("Bid failed: ", err)
 				}
 
 				log.Println("Bid response: ", ack)
@@ -68,8 +68,7 @@ func main() {
 
 				result, err := server.Result(context.Background(), getResult)
 				if err != nil {
-					log.Printf("Result failed:")
-					log.Println(err)
+					log.Println("Result failed: ", err)
 				}
 
 				log.Println("Result response: ", result)
