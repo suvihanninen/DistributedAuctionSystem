@@ -149,7 +149,7 @@ func (RM *RMServer) Result(ctx context.Context, GetResult *auction.GetResult) (*
 	if time.Now().After(RM.time) {
 		message = "Time is out"
 	} else {
-		message = "Time is not out"
+		message = "The auction is ongoing"
 	}
 	println("Outcome inside Result: ", RM.highestBid)
 	return &auction.ReturnResult{Outcome: RM.highestBid, Message: message}, nil

@@ -59,6 +59,8 @@ func main() {
 				if err != nil {
 					log.Printf("Bid failed:")
 					log.Println(err)
+					log.Println("We need to handle crash")
+					Dial(port)
 				}
 
 				log.Println("Bid response: ", ack.Acknowledgement)
@@ -71,6 +73,7 @@ func main() {
 				if err != nil {
 					log.Printf("Result failed:")
 					log.Println(err)
+					Redial(port)
 				}
 				outcomeString := strconv.FormatInt(int64(result.Outcome), 10)
 				log.Println(result.Message + ". The result of the auction is: " + outcomeString)
@@ -84,5 +87,29 @@ func main() {
 	for {
 
 	}
+
+}
+
+func Redial(port string) *grpc.ClientConn {
+	log.Printf("Port which is not listening anymore: " + port)
+	if port == ":4001" {
+		port = ":4002"
+	} else {
+		port = ":4001"
+	}
+
+	connection, err := grpc.Dial(port, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("Unable to connect: %v", err)
+	}
+
+	server = auction.NewAuctionClient(connection) //creates a new client
+
+	ServerConn = connection
+	log.Printf("Client has connected to port %s", port)
+	return ServerConn
+}
+
+func HandleCrash() {
 
 }

@@ -30,6 +30,7 @@ func main() {
 	port := os.Args[1] //give it a port and input the same port to the client
 	address := ":" + port
 	list, err := net.Listen("tcp", address)
+
 	if err != nil {
 		log.Printf("Server on port %s: Failed to listen on port %s: %v", port, address, err) //If it fails to listen on the port, run launchServer method again with the next value/port in ports array
 		return
@@ -48,13 +49,18 @@ func main() {
 
 	log.Printf("Server on port %s: Listening at %v\n", port, list.Addr())
 	go func() {
+		log.Printf("We are trying to listen calls from client: " + port)
+
 		if err := grpcServer.Serve(list); err != nil {
 			log.Fatalf("failed to serve %v", err)
 		}
+
+		log.Printf("We have started to listen calls from client: " + port)
 	}()
 
 	serverToDial := 5001
 	conn := server.DialToPR(serverToDial)
+
 	defer conn.Close()
 
 	// scanner := bufio.NewScanner(os.Stdin)
