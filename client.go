@@ -3,7 +3,6 @@ package main
 import (
 	"bufio"
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -28,20 +27,24 @@ func main() {
 		log.Fatalf("Unable to connect: %v", err)
 	}
 
+	//log to file instead of console
+	f := setLogClient()
+	defer f.Close()
+
 	server := auction.NewAuctionClient(connection) //creates a new client
 
 	defer connection.Close()
 
 	go func() {
 		scanner := bufio.NewScanner(os.Stdin)
-		log.Println("Enter 'bid' to make a new bid, or 'result' to retrieve the highest bid/outcome.")
+		println("Enter 'bid' to make a new bid, or 'result' to retrieve the highest bid/outcome.")
 
 		for {
 			scanner.Scan()
 			text := scanner.Text()
 
 			if text == "bid" {
-				log.Println("Enter how much you would like to bid:")
+				println("Enter how much you would like to bid:")
 				scanner.Scan()
 				text := scanner.Text()
 				bidAmount, err := strconv.Atoi(text)
@@ -55,23 +58,23 @@ func main() {
 
 				ack := RecBid(bid, connection, server, port)
 
-				log.Println("Bid response: ", ack.Acknowledgement)
-
+				log.Printf("Client: Bid response: ", ack.GetAcknowledgement())
+				println("Bid response: ", ack.GetAcknowledgement())
 			} else if text == "result" {
-				fmt.Println("if statement result ")
+
 				getResult := &auction.GetResult{}
 
 				result := RecResult(getResult, connection, server, port)
-				fmt.Println("result inside client: ", result)
-				if result == nil {
-					continue
-				}
+				// fmt.Println("result inside client: ", result)
+				// if result == nil {
+				// 	continue
+				// }
 
 				outcomeString := strconv.FormatInt(int64(result.Outcome), 10)
-				log.Println(result.Message + ". The result of the auction is: " + outcomeString)
-
+				log.Printf("Client: " + result.Message + ". The result of the auction is: " + outcomeString)
+				println(result.Message + ". The result of the auction is: " + outcomeString)
 			} else {
-				log.Println("Sorry didn't catch that, try again ")
+				println("Sorry didn't catch that, try again ")
 			}
 		}
 	}()
@@ -84,10 +87,10 @@ func main() {
 
 func RecBid(setBid *auction.SetBid, connection *grpc.ClientConn, server auction.AuctionClient, port string) *auction.AckBid {
 	ack, err := server.Bid(context.Background(), setBid)
-	fmt.Println("ack inside recbid: ", ack)
+
 	if err != nil {
-		log.Printf("Bid failed:")
-		log.Println(err)
+		log.Printf("Client: Bid failed: ", err)
+		log.Printf("Client: FEServer has died")
 		connection, server = Redial(port)
 		ack = RecBid(setBid, connection, server, port)
 
@@ -99,8 +102,8 @@ func RecBid(setBid *auction.SetBid, connection *grpc.ClientConn, server auction.
 func RecResult(getResult *auction.GetResult, connection *grpc.ClientConn, server auction.AuctionClient, port string) *auction.ReturnResult {
 	result, err := server.Result(context.Background(), getResult)
 	if err != nil {
-		log.Printf("Result failed:")
-		log.Println(err)
+		log.Printf("Client: Bid failed: ", err)
+		log.Printf("Client: FEServer has died")
 		connection, server = Redial(port)
 		result = RecResult(getResult, connection, server, port)
 	}
@@ -108,23 +111,29 @@ func RecResult(getResult *auction.GetResult, connection *grpc.ClientConn, server
 }
 
 func Redial(port string) (*grpc.ClientConn, auction.AuctionClient) {
-	log.Printf("Port which is not listening anymore: " + port)
+	log.Printf("Client: FEServer on port %s is not listening anymore. It has died", port)
 	if port == ":4001" {
 		port = ":4002"
 	} else {
 		port = ":4001"
 	}
-
+	log.Printf("Client: Redialing to new port: " + port)
 	connection, err := grpc.Dial(port, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Unable to connect: %v", err)
 	}
 
 	server = auction.NewAuctionClient(connection) //creates a new client
-	log.Printf("Client has connected to port %s", port)
+	log.Printf("Client: Client has connected to new FEServer on port %s", port)
 	return connection, server
 }
 
-func HandleCrash() {
-
+// sets the logger to use a log.txt file instead of the console
+func setLogClient() *os.File {
+	f, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	log.SetOutput(f)
+	return f
 }

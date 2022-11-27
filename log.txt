@@ -1,0 +1,73 @@
+2022/11/27 18:53:24 RMServer: Trying to dial: 5002
+2022/11/27 18:53:24 RMServer: Trying to dial: 5003
+2022/11/27 18:53:27 RMServer: Trying to dial: 5001
+2022/11/27 18:53:27 RMServer: Trying to dial: 5003
+2022/11/27 18:53:29 RMServer: Trying to dial: 5001
+2022/11/27 18:53:29 RMServer: Trying to dial: 5002
+2022/11/27 18:53:33 FEServer: Server on port 4001: Listening at [::]:4001
+2022/11/27 18:53:33 FEServer: We are trying to listen calls from client: 4001
+2022/11/27 18:53:33 FEServer: Connection established with Primary Replica.
+2022/11/27 18:53:36 FEServer: Server on port 4002: Listening at [::]:4002
+2022/11/27 18:53:36 FEServer: We are trying to listen calls from client: 4002
+2022/11/27 18:53:36 FEServer: Connection established with Primary Replica.
+2022/11/27 18:53:59 RMServer: Bid updated on replica manager on port %!s(int32=5001) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"Failure: Bid wasn't enough big")
+2022/11/27 18:53:59 RMServer: Bid updated on replica manager on port %!s(int32=5001) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"Failure: Bid wasn't enough big")
+2022/11/27 18:53:59 RMServer: Bid updated on replica manager on port %!s(int32=5002) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"Failure: Bid wasn't enough big")
+2022/11/27 18:53:59 RMServer: Bid updated on replica manager on port %!s(int32=5003) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"Success: Highest bid updated")
+2022/11/27 18:53:59 RMServer: Bid updated on replica manager on port %!s(int32=5002) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"Success: Highest bid updated")
+2022/11/27 18:53:59 RMServer: Bid updated on replica manager on port %!s(int32=5003) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"Failure: Bid wasn't enough big")
+2022/11/27 18:53:59 Client: Bid response: %!(EXTRA string=Success: Highest bid updated)
+2022/11/27 18:54:39 RMServer: Bid updated on replica manager on port %!s(int32=5001) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"Failure: Bid wasn't enough big")
+2022/11/27 18:54:39 RMServer: Bid updated on replica manager on port %!s(int32=5001) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"Failure: Bid wasn't enough big")
+2022/11/27 18:54:39 RMServer: Bid updated on replica manager on port %!s(int32=5002) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"Failure: Bid wasn't enough big")
+2022/11/27 18:54:39 RMServer: Bid updated on replica manager on port %!s(int32=5003) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"Success: Highest bid updated")
+2022/11/27 18:54:39 RMServer: Bid updated on replica manager on port %!s(int32=5002) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"Success: Highest bid updated")
+2022/11/27 18:54:39 RMServer: Bid updated on replica manager on port %!s(int32=5003) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"Failure: Bid wasn't enough big")
+2022/11/27 18:54:39 Client: Bid response: %!(EXTRA string=Success: Highest bid updated)
+2022/11/27 18:55:05 RMServer: Something went wrong while sending heartbeat
+2022/11/27 18:55:05 RMServer: Error:%!(EXTRA *status.Error=rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing dial tcp :5001: connect: connection refused")
+2022/11/27 18:55:05 RMServer: Exception, We did not get heartbeat back from Primary Replica with port %!v(MISSING). It has died, 
+2022/11/27 18:55:05 RMServer: Leader election started with Bully Algorithm
+2022/11/27 18:55:05 RMServer: New Primary Replica has port 5002 
+2022/11/27 18:55:05 RMServer: Something went wrong while sending heartbeat
+2022/11/27 18:55:05 RMServer: Error:%!(EXTRA *status.Error=rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing dial tcp :5001: connect: connection refused")
+2022/11/27 18:55:05 RMServer: Exception, We did not get heartbeat back from Primary Replica with port %!v(MISSING). It has died, 
+2022/11/27 18:55:05 RMServer: Leader election started with Bully Algorithm
+2022/11/27 18:55:05 RMServer: New Primary Replica has port 5002 
+2022/11/27 18:55:14 FEServer: Error: rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing dial tcp :5001: connect: connection refused"
+2022/11/27 18:55:14 FEServer: Dialing to new PrimaryReplica on port %!(EXTRA int64=5002)
+2022/11/27 18:55:14 FEServer: Connection established with Primary Replica.
+2022/11/27 18:55:14 Client: Bid failed: %!(EXTRA *status.Error=rpc error: code = Internal desc = grpc: error while marshaling: proto: Marshal called with nil)
+2022/11/27 18:55:14 Client: FEServer has died
+2022/11/27 18:55:14 Client: FEServer on port :4001 is not listening anymore. It has died
+2022/11/27 18:55:14 Client: Redialing to new port: :4002
+2022/11/27 18:55:14 Client: Client has connected to new FEServer on port :4002
+2022/11/27 18:55:14 FEServer: Error: rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing dial tcp :5001: connect: connection refused"
+2022/11/27 18:55:14 FEServer: Dialing to new PrimaryReplica on port %!(EXTRA int64=5002)
+2022/11/27 18:55:14 FEServer: Connection established with Primary Replica.
+2022/11/27 18:55:14 Client: Bid failed: %!(EXTRA *status.Error=rpc error: code = Internal desc = grpc: error while marshaling: proto: Marshal called with nil)
+2022/11/27 18:55:14 Client: FEServer has died
+2022/11/27 18:55:14 Client: FEServer on port :4001 is not listening anymore. It has died
+2022/11/27 18:55:14 Client: Redialing to new port: :4002
+2022/11/27 18:55:14 Client: Client has connected to new FEServer on port :4002
+2022/11/27 18:55:14 Client: Bid response: %!(EXTRA string=Failure: Time is out)
+2022/11/27 19:02:07 RMServer: Something went wrong while sending heartbeat
+2022/11/27 19:02:07 RMServer: Error:%!(EXTRA *status.Error=rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing dial tcp :5002: connect: connection refused")
+2022/11/27 19:02:07 RMServer: Exception, We did not get heartbeat back from Primary Replica with port %!v(MISSING). It has died, 
+2022/11/27 19:02:07 RMServer: Leader election started with Bully Algorithm
+2022/11/27 19:02:07 RMServer: New Primary Replica has port 5002 
+2022/11/27 19:02:23 RMServer: Trying to dial: 5002
+2022/11/27 19:02:25 RMServer: Trying to dial: 5001
+2022/11/27 19:02:25 RMServer: Trying to dial: 5003
+2022/11/27 19:02:25 RMServer: Trying to dial: 5003
+2022/11/27 19:02:27 RMServer: Trying to dial: 5001
+2022/11/27 19:02:27 RMServer: Trying to dial: 5002
+2022/11/27 19:02:31 FEServer: Server on port 4001: Listening at [::]:4001
+2022/11/27 19:02:31 FEServer: We are trying to listen calls from client: 4001
+2022/11/27 19:02:31 FEServer: Connection established with Primary Replica.
+2022/11/27 19:02:32 FEServer: Server on port 4002: Listening at [::]:4002
+2022/11/27 19:02:32 FEServer: We are trying to listen calls from client: 4002
+2022/11/27 19:02:32 FEServer: Connection established with Primary Replica.
+2022/11/27 19:03:02 RMServer: Bid updated on replica manager on port %!s(int32=5002) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"none")
+2022/11/27 19:03:02 RMServer: Bid updated on replica manager on port %!s(int32=5003) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"none")
+2022/11/27 19:03:02 Client: Bid response: %!(EXTRA string=Success: Highest bid updated)

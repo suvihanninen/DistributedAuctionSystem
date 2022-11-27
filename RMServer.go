@@ -38,9 +38,13 @@ func main() {
 		ctx:        ctx,
 		isPrimary:  primary,
 		highestBid: 0,
-		time:       time.Now().Local().Add(time.Second * time.Duration(120)),
+		time:       time.Now().Local().Add(time.Second * time.Duration(100)),
 		primary:    nil,
 	}
+
+	//log to file instead of console
+	f := setLogRMServer()
+	defer f.Close()
 
 	//Primary needs to listen so that replica managers can ask if it's alive
 	//Replica managers need to listen for incoming data to be replicated
@@ -64,7 +68,7 @@ func main() {
 		}
 
 		var conn *grpc.ClientConn
-		log.Printf("Trying to dial: %v\n", port)
+		log.Printf("RMServer: Trying to dial: %v\n", port)
 		conn, err := grpc.Dial(fmt.Sprintf(":%v", port), grpc.WithInsecure(), grpc.WithBlock()) //This is going to wait until it receives the connection
 		if err != nil {
 			log.Fatalf("Could not connect: %s", err)
@@ -85,15 +89,17 @@ func main() {
 			for {
 				time.Sleep(2 * time.Second)
 				heartbeatMsg := &auction.Request{Message: "alive?"}
-				response, err := rmServer.primary.GetHeartBeat(rmServer.ctx, heartbeatMsg)
+				_, err := rmServer.primary.GetHeartBeat(rmServer.ctx, heartbeatMsg)
 				if err != nil {
-					log.Printf("Something went wrong while sending heartbeat to:")
-					log.Printf("Error:", err)
+					log.Printf("RMServer: Something went wrong while sending heartbeat")
+					log.Printf("RMServer: Error:", err)
+					log.Printf("RMServer: Exception, We did not get heartbeat back from Primary Replica with port %v. It has died, ")
 					delete(rmServer.peers, 5001)
 					rmServer.ElectLeader()
 				}
-				log.Printf("We got a heart beat from %s", response)
-				fmt.Println("IsPrimary:", rmServer.isPrimary)
+				//comment out if you wanna see the logging of heartbeat
+				//log.Printf("We got a heart beat from %s", response)
+
 				if rmServer.isPrimary {
 					break
 				}
@@ -102,7 +108,6 @@ func main() {
 		for {
 
 		}
-		// implement dialing here if we have to implement heartbeats
 	}
 	for {
 
@@ -111,23 +116,21 @@ func main() {
 }
 
 func (RM *RMServer) ElectLeader() {
-	fmt.Printf("INSIDE ELECT LEADER")
+	log.Printf("RMServer: Leader election started with Bully Algorithm")
 	var min int32
 	min = RM.id
 	for id := range RM.peers {
-		fmt.Println("id: ", id)
-		fmt.Println("min: ", min)
 		if min > id {
 			min = id
-			fmt.Printf("Id was smaller than min")
 		}
 	}
-	fmt.Printf("Smallest port %v", min)
+
 	if RM.id == min {
 		RM.isPrimary = true
 	} else {
 		RM.primary = RM.peers[min]
 	}
+	log.Printf("RMServer: New Primary Replica has port %v ", min)
 }
 
 func (RM *RMServer) GetHeartBeat(ctx context.Context, Heartbeat *auction.Request) (*auction.BeatAck, error) {
@@ -137,16 +140,19 @@ func (RM *RMServer) GetHeartBeat(ctx context.Context, Heartbeat *auction.Request
 func (RM *RMServer) Bid(ctx context.Context, SetBid *auction.SetBid) (*auction.AckBid, error) {
 	outcome, err := RM.updateBidToRm(SetBid.GetAmount())
 	if err != nil {
-		log.Fatalf("updateBidToRm failed inside RMServer: %s", err)
+		log.Fatalf("Updating bid to Replica Managers failed inside RMServer: %s", err)
 	}
-	println("Outcome inside bid: ", outcome)
+
 	return &auction.AckBid{Acknowledgement: outcome}, nil
 }
 
 func (rm *RMServer) updateBidToRm(amount int32) (string, error) {
-	numOfFailures := 0
+	if rm.isPrimary == false {
+		return "none", nil
+	}
+
 	if time.Now().After(rm.time) {
-		return "Time is out", nil
+		return "Failure: Time is out", nil
 	}
 	if amount > rm.highestBid {
 		rm.highestBid = amount
@@ -157,22 +163,18 @@ func (rm *RMServer) updateBidToRm(amount int32) (string, error) {
 			//Reconsider how to handle a potentially crashed replica manager
 			ack, err := server.Bid(rm.ctx, updatedBid)
 			if err != nil {
-				log.Printf("Something went wrong when updating bid to %v", id)
+				log.Printf("RMServer: Something went wrong when updating bid to %v", id)
+				log.Printf("RMServer: Exception, Replica Manager on port %v died", id)
 				delete(rm.peers, id)
-				numOfFailures++
 			}
 
-			log.Printf("Bid was updated to replica manager with ID: %s", ack)
+			log.Printf("RMServer: Bid updated on replica manager on port %s with ack: ", id, ack)
 		}
 	} else {
-		return "Failure", nil
+		return "Failure: Bid wasn't enough big", nil
 	}
 
-	if numOfFailures > 1 {
-		return "Exception", nil
-	}
-
-	return "Success", nil
+	return "Success: Highest bid updated", nil
 }
 
 func (RM *RMServer) Result(ctx context.Context, GetResult *auction.GetResult) (*auction.ReturnResult, error) {
@@ -180,8 +182,18 @@ func (RM *RMServer) Result(ctx context.Context, GetResult *auction.GetResult) (*
 	if time.Now().After(RM.time) {
 		message = "Time is out"
 	} else {
-		message = "The auction is ongoing"
+		message = "The  ongoing"
 	}
-	println("Outcome inside Result: ", RM.highestBid)
+	log.Printf("RMServer: Outcome inside Result: ", RM.highestBid)
 	return &auction.ReturnResult{Outcome: RM.highestBid, Message: message}, nil
+}
+
+// sets the logger to use a log.txt file instead of the console
+func setLogRMServer() *os.File {
+	f, err := os.OpenFile("log.txt", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("error opening file: %v", err)
+	}
+	log.SetOutput(f)
+	return f
 }
