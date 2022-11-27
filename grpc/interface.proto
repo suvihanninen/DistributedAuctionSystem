@@ -8,7 +8,7 @@ service Auction {
     rpc Bid (SetBid) returns (AckBid) {}
     rpc Result (GetResult) returns (ReturnResult) {}
     rpc GetHeartBeat(Request)returns (BeatAck){}
-    
+    rpc UpdateBid(SetBid) returns (AckBid){}
 }
 
 message Request {

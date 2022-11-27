@@ -58,7 +58,7 @@ func main() {
 
 				ack := RecBid(bid, connection, server, port)
 
-				log.Printf("Client: Bid response: ", ack.GetAcknowledgement())
+				log.Printf("Client %s: Bid response: ", port, ack.GetAcknowledgement())
 				println("Bid response: ", ack.GetAcknowledgement())
 			} else if text == "result" {
 
@@ -71,7 +71,7 @@ func main() {
 				// }
 
 				outcomeString := strconv.FormatInt(int64(result.Outcome), 10)
-				log.Printf("Client: " + result.Message + ". The result of the auction is: " + outcomeString)
+				log.Printf("Client %s: "+result.Message+". The result of the auction is: "+outcomeString, port)
 				println(result.Message + ". The result of the auction is: " + outcomeString)
 			} else {
 				println("Sorry didn't catch that, try again ")
@@ -89,8 +89,8 @@ func RecBid(setBid *auction.SetBid, connection *grpc.ClientConn, server auction.
 	ack, err := server.Bid(context.Background(), setBid)
 
 	if err != nil {
-		log.Printf("Client: Bid failed: ", err)
-		log.Printf("Client: FEServer has died")
+		log.Printf("Client %s: Bid failed: ", port, err)
+		log.Printf("Client %s: FEServer has died", port)
 		connection, server = Redial(port)
 		ack = RecBid(setBid, connection, server, port)
 
@@ -102,8 +102,8 @@ func RecBid(setBid *auction.SetBid, connection *grpc.ClientConn, server auction.
 func RecResult(getResult *auction.GetResult, connection *grpc.ClientConn, server auction.AuctionClient, port string) *auction.ReturnResult {
 	result, err := server.Result(context.Background(), getResult)
 	if err != nil {
-		log.Printf("Client: Bid failed: ", err)
-		log.Printf("Client: FEServer has died")
+		log.Printf("Client %s: Bid failed: ", port, err)
+		log.Printf("Client %s: FEServer has died", port)
 		connection, server = Redial(port)
 		result = RecResult(getResult, connection, server, port)
 	}

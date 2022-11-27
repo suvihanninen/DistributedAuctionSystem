@@ -68,7 +68,7 @@ func main() {
 		}
 
 		var conn *grpc.ClientConn
-		log.Printf("RMServer: Trying to dial: %v\n", port)
+		log.Printf("RMServer %v: Trying to dial: %v\n", rmServer.id, port)
 		conn, err := grpc.Dial(fmt.Sprintf(":%v", port), grpc.WithInsecure(), grpc.WithBlock()) //This is going to wait until it receives the connection
 		if err != nil {
 			log.Fatalf("Could not connect: %s", err)
@@ -91,9 +91,9 @@ func main() {
 				heartbeatMsg := &auction.Request{Message: "alive?"}
 				_, err := rmServer.primary.GetHeartBeat(rmServer.ctx, heartbeatMsg)
 				if err != nil {
-					log.Printf("RMServer: Something went wrong while sending heartbeat")
-					log.Printf("RMServer: Error:", err)
-					log.Printf("RMServer: Exception, We did not get heartbeat back from Primary Replica with port %v. It has died, ")
+					log.Printf("RMServer %v: Something went wrong while sending heartbeat", rmServer.id)
+					log.Printf("RMServer %v: Error:", rmServer.id, err)
+					log.Printf("RMServer %v: Exception, We did not get heartbeat back from Primary Replica with port %v. It has died, ", rmServer.id)
 					delete(rmServer.peers, 5001)
 					rmServer.ElectLeader()
 				}
@@ -116,7 +116,7 @@ func main() {
 }
 
 func (RM *RMServer) ElectLeader() {
-	log.Printf("RMServer: Leader election started with Bully Algorithm")
+	log.Printf("RMServer %v: Leader election started with Bully Algorithm", RM.id)
 	var min int32
 	min = RM.id
 	for id := range RM.peers {
@@ -130,7 +130,7 @@ func (RM *RMServer) ElectLeader() {
 	} else {
 		RM.primary = RM.peers[min]
 	}
-	log.Printf("RMServer: New Primary Replica has port %v ", min)
+	log.Printf("RMServer %v: New Primary Replica has port %v ", RM.id, min)
 }
 
 func (RM *RMServer) GetHeartBeat(ctx context.Context, Heartbeat *auction.Request) (*auction.BeatAck, error) {
@@ -147,34 +147,45 @@ func (RM *RMServer) Bid(ctx context.Context, SetBid *auction.SetBid) (*auction.A
 }
 
 func (rm *RMServer) updateBidToRm(amount int32) (string, error) {
-	if rm.isPrimary == false {
-		return "none", nil
-	}
 
 	if time.Now().After(rm.time) {
 		return "Failure: Time is out", nil
 	}
 	if amount > rm.highestBid {
+
+		println("Inside if updating amount")
+		println("Highertbid", rm.highestBid)
+		println("Amount", amount)
 		rm.highestBid = amount
 		updatedBid := &auction.SetBid{Amount: int32(amount)}
 
 		//Broadcasting updated bid to all replica managers
 		for id, server := range rm.peers {
 			//Reconsider how to handle a potentially crashed replica manager
-			ack, err := server.Bid(rm.ctx, updatedBid)
+			ack, err := server.UpdateBid(rm.ctx, updatedBid)
 			if err != nil {
-				log.Printf("RMServer: Something went wrong when updating bid to %v", id)
-				log.Printf("RMServer: Exception, Replica Manager on port %v died", id)
+				log.Printf("RMServer %v: Something went wrong when updating bid to %v", rm.id, id)
+				log.Printf("RMServer %v: Exception, Replica Manager on port %v died", rm.id, id)
 				delete(rm.peers, id)
 			}
 
-			log.Printf("RMServer: Bid updated on replica manager on port %s with ack: ", id, ack)
+			log.Printf("RMServer %v: Bid updated on replica manager on port %s with ack: ", rm.id, id, ack)
 		}
 	} else {
+		println("Failure: Highest bid", rm.highestBid)
+		println("Failure: Amount", amount)
 		return "Failure: Bid wasn't enough big", nil
 	}
 
 	return "Success: Highest bid updated", nil
+}
+
+func (RM *RMServer) UpdateBid(ctx context.Context, SetBid *auction.SetBid) (*auction.AckBid, error) {
+	RM.highestBid = SetBid.Amount
+	println("UpdateBid: Highest bid", RM.highestBid)
+	log.Printf("RMServer %v: Replica Manager on port %v updated. Value:  ", RM.id, RM.highestBid)
+	outcome := "updated"
+	return &auction.AckBid{Acknowledgement: outcome}, nil
 }
 
 func (RM *RMServer) Result(ctx context.Context, GetResult *auction.GetResult) (*auction.ReturnResult, error) {
@@ -184,7 +195,7 @@ func (RM *RMServer) Result(ctx context.Context, GetResult *auction.GetResult) (*
 	} else {
 		message = "The  ongoing"
 	}
-	log.Printf("RMServer: Outcome inside Result: ", RM.highestBid)
+	log.Printf("RMServer %v: Outcome inside Result: ", RM.id, RM.highestBid)
 	return &auction.ReturnResult{Outcome: RM.highestBid, Message: message}, nil
 }
 

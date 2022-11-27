@@ -26,7 +26,7 @@ func main() {
 	list, err := net.Listen("tcp", address)
 
 	if err != nil {
-		log.Printf("FEServer: Server on port %s: Failed to listen on port %s: %v", port, address, err) //If it fails to listen on the port, run launchServer method again with the next value/port in ports array
+		log.Printf("FEServer %s: Server on port %s: Failed to listen on port %s: %v", port, port, address, err) //If it fails to listen on the port, run launchServer method again with the next value/port in ports array
 		return
 	}
 	grpcServer := grpc.NewServer()
@@ -45,15 +45,15 @@ func main() {
 
 	auction.RegisterAuctionServer(grpcServer, server) //Registers the server to the gRPC server.
 
-	log.Printf("FEServer: Server on port %s: Listening at %v\n", port, list.Addr())
+	log.Printf("FEServer %s: Server on port %s: Listening at %v\n", server.port, port, list.Addr())
 	go func() {
-		log.Printf("FEServer: We are trying to listen calls from client: " + port)
+		log.Printf("FEServer %s: We are trying to listen calls from client: %s", server.port, port)
 
 		if err := grpcServer.Serve(list); err != nil {
 			log.Fatalf("failed to serve %v", err)
 		}
 
-		log.Printf("FEServer: We have started to listen calls from client: " + port)
+		log.Printf("FEServer %s: We have started to listen calls from client: %s", server.port, port)
 	}()
 
 	serverToDial = 5001
@@ -73,7 +73,7 @@ func (FE *FEServer) DialToPR(serverToDial int) *grpc.ClientConn {
 	if err != nil {
 		log.Fatalf("Unable to connect: %v", err)
 	}
-	log.Printf("FEServer: Connection established with Primary Replica.")
+	log.Printf("FEServer %s: Connection established with Primary Replica.", FE.port)
 	primServer := auction.NewAuctionClient(connection)
 	FE.primaryServer = primServer
 	return connection
@@ -82,7 +82,7 @@ func (FE *FEServer) DialToPR(serverToDial int) *grpc.ClientConn {
 func (FE *FEServer) Bid(ctx context.Context, SetBid *auction.SetBid) (*auction.AckBid, error) {
 	outcome, err := FE.primaryServer.Bid(ctx, SetBid)
 	if err != nil {
-		log.Printf("FEServer: Error: %s", err)
+		log.Printf("FEServer %s: Error: %s", FE.port, err)
 		//if we get an error we need to Dial to another port
 		FE.Redial("bid", SetBid.GetAmount())
 	}
@@ -94,7 +94,7 @@ func (FE *FEServer) Result(ctx context.Context, GetResult *auction.GetResult) (*
 
 	outcome, err := FE.primaryServer.Result(ctx, GetResult)
 	if err != nil {
-		log.Printf("FEServer: Error %s", err)
+		log.Printf("FEServer %s: Error %s", FE.port, err)
 
 		//if we get an error we need to Dial to another port
 		FE.Redial("result", 0)
@@ -108,7 +108,7 @@ func (FE *FEServer) Redial(functionType string, bid int32) string {
 
 	portNumber := int64(serverToDial) + int64(1)
 
-	log.Printf("FEServer: Dialing to new PrimaryReplica on port ", portNumber)
+	log.Printf("FEServer %s: Dialing to new PrimaryReplica on port ", FE.port, portNumber)
 	FE.DialToPR(int(portNumber))
 	//redial
 	if functionType == "result" {
