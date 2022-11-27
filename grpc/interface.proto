@@ -7,7 +7,17 @@ option go_package = "https://github.com/suvihanninen/DistributedAuctionSystem;au
 service Auction {
     rpc Bid (SetBid) returns (AckBid) {}
     rpc Result (GetResult) returns (ReturnResult) {}
+    rpc GetHeartBeat(Request)returns (BeatAck){}
     
+}
+
+message Request {
+    string message = 1;
+}
+
+message BeatAck {
+    string port = 1;
+
 }
 
 message SetBid {

@@ -21,6 +21,7 @@ type RMServer struct {
 	ctx        context.Context
 	highestBid int32
 	time       time.Time
+	primary    auction.AuctionClient
 }
 
 func main() {
@@ -37,7 +38,8 @@ func main() {
 		ctx:        ctx,
 		isPrimary:  primary,
 		highestBid: 0,
-		time:       time.Now().Local().Add(time.Second * time.Duration(60)),
+		time:       time.Now().Local().Add(time.Second * time.Duration(120)),
+		primary:    nil,
 	}
 
 	//Primary needs to listen so that replica managers can ask if it's alive
@@ -54,26 +56,49 @@ func main() {
 		}
 	}()
 
+	for i := 0; i < 3; i++ {
+		port := int32(5001) + int32(i)
+
+		if port == ownPort {
+			continue
+		}
+
+		var conn *grpc.ClientConn
+		log.Printf("Trying to dial: %v\n", port)
+		conn, err := grpc.Dial(fmt.Sprintf(":%v", port), grpc.WithInsecure(), grpc.WithBlock()) //This is going to wait until it receives the connection
+		if err != nil {
+			log.Fatalf("Could not connect: %s", err)
+		}
+		defer conn.Close()
+		c := auction.NewAuctionClient(conn)
+		rmServer.peers[port] = c
+		if port == 5001 {
+			rmServer.primary = c
+		}
+	}
+
 	// If server is primary, dial to all other replica managers
 	if rmServer.isPrimary {
-		for i := 0; i < 3; i++ {
-			port := int32(5001) + int32(i)
 
-			if port == ownPort {
-				continue
-			}
-
-			var conn *grpc.ClientConn
-			log.Printf("Trying to dial: %v\n", port)
-			conn, err := grpc.Dial(fmt.Sprintf(":%v", port), grpc.WithInsecure(), grpc.WithBlock()) //This is going to wait until it receives the connection
-			if err != nil {
-				log.Fatalf("Could not connect: %s", err)
-			}
-			defer conn.Close()
-			c := auction.NewAuctionClient(conn)
-			rmServer.peers[port] = c
-		}
 	} else {
+		go func() {
+			for {
+				time.Sleep(2 * time.Second)
+				heartbeatMsg := &auction.Request{Message: "alive?"}
+				response, err := rmServer.primary.GetHeartBeat(rmServer.ctx, heartbeatMsg)
+				if err != nil {
+					log.Printf("Something went wrong while sending heartbeat to:")
+					log.Printf("Error:", err)
+					delete(rmServer.peers, 5001)
+					rmServer.ElectLeader()
+				}
+				log.Printf("We got a heart beat from %s", response)
+				fmt.Println("IsPrimary:", rmServer.isPrimary)
+				if rmServer.isPrimary {
+					break
+				}
+			}
+		}()
 		for {
 
 		}
@@ -82,25 +107,31 @@ func main() {
 	for {
 
 	}
-	// if rmServer.isPrimary {
 
-	// 	scanner := bufio.NewScanner(os.Stdin)
-	// 	for {
-	// 		log.Println("Enter a bid: ")
-	// 		scanner.Scan()
-	// 		bidText := scanner.Text()
-	// 		bidNumber, _ := strconv.ParseInt(bidText, 10, 32)
-	// 		bid := &auction.SetBid{
-	// 			Amount: int32(bidNumber),
-	// 		}
-	// 		outcome, err := rmServer.Bid(rmServer.ctx, bid)
-	// 		if err != nil {
-	// 			log.Fatalf("bid failed inside main: %s", err)
-	// 		}
-	// 		log.Println("Outcome inside main: ", outcome)
-	// 	}
-	// }
+}
 
+func (RM *RMServer) ElectLeader() {
+	fmt.Printf("INSIDE ELECT LEADER")
+	var min int32
+	min = RM.id
+	for id := range RM.peers {
+		fmt.Println("id: ", id)
+		fmt.Println("min: ", min)
+		if min > id {
+			min = id
+			fmt.Printf("Id was smaller than min")
+		}
+	}
+	fmt.Printf("Smallest port %v", min)
+	if RM.id == min {
+		RM.isPrimary = true
+	} else {
+		RM.primary = RM.peers[min]
+	}
+}
+
+func (RM *RMServer) GetHeartBeat(ctx context.Context, Heartbeat *auction.Request) (*auction.BeatAck, error) {
+	return &auction.BeatAck{Port: fmt.Sprint(RM.id)}, nil
 }
 
 func (RM *RMServer) Bid(ctx context.Context, SetBid *auction.SetBid) (*auction.AckBid, error) {
@@ -122,9 +153,9 @@ func (rm *RMServer) updateBidToRm(amount int32) (string, error) {
 		updatedBid := &auction.SetBid{Amount: int32(amount)}
 
 		//Broadcasting updated bid to all replica managers
-		for id, rmServer := range rm.peers {
+		for id, server := range rm.peers {
 			//Reconsider how to handle a potentially crashed replica manager
-			ack, err := rmServer.Bid(rm.ctx, updatedBid)
+			ack, err := server.Bid(rm.ctx, updatedBid)
 			if err != nil {
 				log.Printf("Something went wrong when updating bid to %v", id)
 				delete(rm.peers, id)

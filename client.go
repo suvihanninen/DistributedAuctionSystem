@@ -3,6 +3,7 @@ package main
 import (
 	"bufio"
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
@@ -29,9 +30,6 @@ func main() {
 
 	server := auction.NewAuctionClient(connection) //creates a new client
 
-	ServerConn = connection
-	defer ServerConn.Close()
-
 	defer connection.Close()
 
 	go func() {
@@ -55,26 +53,20 @@ func main() {
 					Amount: int32(bidAmount),
 				}
 
-				ack, err := server.Bid(context.Background(), bid)
-				if err != nil {
-					log.Printf("Bid failed:")
-					log.Println(err)
-					log.Println("We need to handle crash")
-					Dial(port)
-				}
+				ack := RecBid(bid, connection, server, port)
 
 				log.Println("Bid response: ", ack.Acknowledgement)
 
 			} else if text == "result" {
-
+				fmt.Println("if statement result ")
 				getResult := &auction.GetResult{}
 
-				result, err := server.Result(context.Background(), getResult)
-				if err != nil {
-					log.Printf("Result failed:")
-					log.Println(err)
-					Redial(port)
+				result := RecResult(getResult, connection, server, port)
+				fmt.Println("result inside client: ", result)
+				if result == nil {
+					continue
 				}
+
 				outcomeString := strconv.FormatInt(int64(result.Outcome), 10)
 				log.Println(result.Message + ". The result of the auction is: " + outcomeString)
 
@@ -90,7 +82,32 @@ func main() {
 
 }
 
-func Redial(port string) *grpc.ClientConn {
+func RecBid(setBid *auction.SetBid, connection *grpc.ClientConn, server auction.AuctionClient, port string) *auction.AckBid {
+	ack, err := server.Bid(context.Background(), setBid)
+	fmt.Println("ack inside recbid: ", ack)
+	if err != nil {
+		log.Printf("Bid failed:")
+		log.Println(err)
+		connection, server = Redial(port)
+		ack = RecBid(setBid, connection, server, port)
+
+	}
+	return ack
+
+}
+
+func RecResult(getResult *auction.GetResult, connection *grpc.ClientConn, server auction.AuctionClient, port string) *auction.ReturnResult {
+	result, err := server.Result(context.Background(), getResult)
+	if err != nil {
+		log.Printf("Result failed:")
+		log.Println(err)
+		connection, server = Redial(port)
+		result = RecResult(getResult, connection, server, port)
+	}
+	return result
+}
+
+func Redial(port string) (*grpc.ClientConn, auction.AuctionClient) {
 	log.Printf("Port which is not listening anymore: " + port)
 	if port == ":4001" {
 		port = ":4002"
@@ -104,10 +121,8 @@ func Redial(port string) *grpc.ClientConn {
 	}
 
 	server = auction.NewAuctionClient(connection) //creates a new client
-
-	ServerConn = connection
 	log.Printf("Client has connected to port %s", port)
-	return ServerConn
+	return connection, server
 }
 
 func HandleCrash() {

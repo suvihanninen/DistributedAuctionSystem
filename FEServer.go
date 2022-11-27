@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"net"
 	"os"
@@ -26,6 +27,8 @@ Send response to the client
 Send reuest to Primary RMServer
 Listen for respnse
 */
+var serverToDial int
+
 func main() {
 	port := os.Args[1] //give it a port and input the same port to the client
 	address := ":" + port
@@ -58,26 +61,11 @@ func main() {
 		log.Printf("We have started to listen calls from client: " + port)
 	}()
 
-	serverToDial := 5001
+	serverToDial = 5001
 	conn := server.DialToPR(serverToDial)
 
 	defer conn.Close()
 
-	// scanner := bufio.NewScanner(os.Stdin)
-	// for {
-	// 	log.Println("Enter a bid: ")
-	// 	scanner.Scan()
-	// 	bidText := scanner.Text()
-	// 	bidNumber, _ := strconv.ParseInt(bidText, 10, 32)
-	// 	bid := &auction.SetBid{
-	// 		Amount: int32(bidNumber),
-	// 	}
-	// 	outcome, err := server.primaryServer.Bid(server.ctx, bid)
-	// 	if err != nil {
-	// 		log.Fatalf("bid failed inside main: %s", err)
-	// 	}
-	// 	log.Println("Outcome inside main: ", outcome)
-	// }
 	for {
 	}
 
@@ -100,18 +88,51 @@ func (FE *FEServer) Bid(ctx context.Context, SetBid *auction.SetBid) (*auction.A
 	log.Println("bid inside FEserver: ", SetBid)
 	outcome, err := FE.primaryServer.Bid(ctx, SetBid)
 	if err != nil {
-		log.Fatalf("bid failed inside FEServer: %s", err)
+		log.Println("bid failed inside FEServer: %s", err)
+		//if we get an error we need to Dial to another port
+		FE.Redial("bid", SetBid.GetAmount())
 	}
-	log.Println("Outcome inside main: ", outcome)
+	log.Println("Outcome inside FEserver: ", outcome)
 	return outcome, nil
 }
 
 func (FE *FEServer) Result(ctx context.Context, GetResult *auction.GetResult) (*auction.ReturnResult, error) {
 	log.Println("Inside FEServer Result getting outcome")
+	log.Println("FE primary server: ")
 	outcome, err := FE.primaryServer.Result(ctx, GetResult)
 	if err != nil {
-		log.Fatalf("result fetching failed inside FEServer: %s", err)
+		log.Printf("result fetching failed inside FEServer: %s", err)
+		//if we get an error we need to Dial to another port
+		FE.Redial("result", 0)
+		return nil, nil
 	}
 
+	fmt.Println("outcome1: ", outcome)
+
 	return outcome, nil
+}
+
+func (FE *FEServer) Redial(functionType string, bid int32) string {
+	log.Println("inside redial for function: ", functionType)
+	// portNumber, err := strconv.ParseInt(FE.port, 10, 32)
+
+	// if err != nil {
+	// 	log.Printf("Error while parsing string to int: ", err)
+	// }
+	portNumber := int64(serverToDial) + int64(1)
+
+	fmt.Printf("New PR port: ", portNumber)
+	FE.DialToPR(int(portNumber))
+	//redial
+	if functionType == "result" {
+		getResult := &auction.GetResult{}
+		outcome, _ := FE.Result(FE.ctx, getResult)
+		return outcome.Message
+	} else { //is bid
+		setBid := &auction.SetBid{
+			Amount: bid,
+		}
+		outcome, _ := FE.Bid(FE.ctx, setBid)
+		return outcome.Acknowledgement
+	}
 }
