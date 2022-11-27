@@ -53,7 +53,8 @@ func main() {
 				}
 
 				bid := &auction.SetBid{
-					Amount: int32(bidAmount),
+					Amount:          int32(bidAmount),
+					HighestBidderId: port,
 				}
 
 				ack := RecBid(bid, connection, server, port)
@@ -72,7 +73,7 @@ func main() {
 
 				outcomeString := strconv.FormatInt(int64(result.Outcome), 10)
 				log.Printf("Client %s: "+result.Message+". The result of the auction is: "+outcomeString, port)
-				println(result.Message + ". The result of the auction is: " + outcomeString)
+				println(result.Message + ". The result of the auction is " + outcomeString + " and this bid was made by client" + result.HighestBidderId)
 			} else {
 				println("Sorry didn't catch that, try again ")
 			}

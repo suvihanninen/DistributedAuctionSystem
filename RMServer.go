@@ -15,13 +15,14 @@ import (
 
 type RMServer struct {
 	auction.UnimplementedAuctionServer
-	id         int32
-	peers      map[int32]auction.AuctionClient
-	isPrimary  bool
-	ctx        context.Context
-	highestBid int32
-	time       time.Time
-	primary    auction.AuctionClient
+	id              int32
+	peers           map[int32]auction.AuctionClient
+	isPrimary       bool
+	ctx             context.Context
+	highestBid      int32
+	time            time.Time
+	primary         auction.AuctionClient
+	highestBidderId string
 }
 
 func main() {
@@ -33,13 +34,14 @@ func main() {
 	defer cancel()
 
 	rmServer := &RMServer{
-		id:         ownPort,
-		peers:      make(map[int32]auction.AuctionClient),
-		ctx:        ctx,
-		isPrimary:  primary,
-		highestBid: 0,
-		time:       time.Now().Local().Add(time.Second * time.Duration(100)),
-		primary:    nil,
+		id:              ownPort,
+		peers:           make(map[int32]auction.AuctionClient),
+		ctx:             ctx,
+		isPrimary:       primary,
+		highestBid:      0,
+		time:            time.Now().Local().Add(time.Second * time.Duration(100)),
+		primary:         nil,
+		highestBidderId: "",
 	}
 
 	//log to file instead of console
@@ -138,7 +140,7 @@ func (RM *RMServer) GetHeartBeat(ctx context.Context, Heartbeat *auction.Request
 }
 
 func (RM *RMServer) Bid(ctx context.Context, SetBid *auction.SetBid) (*auction.AckBid, error) {
-	outcome, err := RM.updateBidToRm(SetBid.GetAmount())
+	outcome, err := RM.updateBidToRm(SetBid.GetAmount(), SetBid.GetHighestBidderId())
 	if err != nil {
 		log.Fatalf("Updating bid to Replica Managers failed inside RMServer: %s", err)
 	}
@@ -146,7 +148,7 @@ func (RM *RMServer) Bid(ctx context.Context, SetBid *auction.SetBid) (*auction.A
 	return &auction.AckBid{Acknowledgement: outcome}, nil
 }
 
-func (rm *RMServer) updateBidToRm(amount int32) (string, error) {
+func (rm *RMServer) updateBidToRm(amount int32, bidderId string) (string, error) {
 
 	if time.Now().After(rm.time) {
 		return "Failure: Time is out", nil
@@ -156,8 +158,10 @@ func (rm *RMServer) updateBidToRm(amount int32) (string, error) {
 		println("Inside if updating amount")
 		println("Highertbid", rm.highestBid)
 		println("Amount", amount)
+		rm.highestBidderId = bidderId
+		println("HighestBidder", bidderId)
 		rm.highestBid = amount
-		updatedBid := &auction.SetBid{Amount: int32(amount)}
+		updatedBid := &auction.SetBid{Amount: int32(amount), HighestBidderId: bidderId}
 
 		//Broadcasting updated bid to all replica managers
 		for id, server := range rm.peers {
@@ -182,6 +186,7 @@ func (rm *RMServer) updateBidToRm(amount int32) (string, error) {
 
 func (RM *RMServer) UpdateBid(ctx context.Context, SetBid *auction.SetBid) (*auction.AckBid, error) {
 	RM.highestBid = SetBid.Amount
+	RM.highestBidderId = SetBid.HighestBidderId
 	println("UpdateBid: Highest bid", RM.highestBid)
 	log.Printf("RMServer %v: Replica Manager updated. Value: ", RM.id, RM.highestBid)
 	outcome := "updated"
@@ -193,10 +198,10 @@ func (RM *RMServer) Result(ctx context.Context, GetResult *auction.GetResult) (*
 	if time.Now().After(RM.time) {
 		message = "Time is out"
 	} else {
-		message = "The  ongoing"
+		message = "The auction is ongoing"
 	}
 	log.Printf("RMServer %v: Outcome inside Result: ", RM.id, RM.highestBid)
-	return &auction.ReturnResult{Outcome: RM.highestBid, Message: message}, nil
+	return &auction.ReturnResult{Outcome: RM.highestBid, Message: message, HighestBidderId: RM.highestBidderId}, nil
 }
 
 // sets the logger to use a log.txt file instead of the console
