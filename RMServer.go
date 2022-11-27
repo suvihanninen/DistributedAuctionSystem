@@ -183,7 +183,7 @@ func (rm *RMServer) updateBidToRm(amount int32) (string, error) {
 func (RM *RMServer) UpdateBid(ctx context.Context, SetBid *auction.SetBid) (*auction.AckBid, error) {
 	RM.highestBid = SetBid.Amount
 	println("UpdateBid: Highest bid", RM.highestBid)
-	log.Printf("RMServer %v: Replica Manager on port %v updated. Value:  ", RM.id, RM.highestBid)
+	log.Printf("RMServer %v: Replica Manager updated. Value: ", RM.id, RM.highestBid)
 	outcome := "updated"
 	return &auction.AckBid{Acknowledgement: outcome}, nil
 }

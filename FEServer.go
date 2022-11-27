@@ -84,7 +84,8 @@ func (FE *FEServer) Bid(ctx context.Context, SetBid *auction.SetBid) (*auction.A
 	if err != nil {
 		log.Printf("FEServer %s: Error: %s", FE.port, err)
 		//if we get an error we need to Dial to another port
-		FE.Redial("bid", SetBid.GetAmount())
+		redialOutcome := FE.Redial("bid", SetBid.GetAmount())
+		outcome = &auction.AckBid{Acknowledgement: redialOutcome}
 	}
 
 	return outcome, nil
