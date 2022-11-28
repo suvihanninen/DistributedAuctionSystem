@@ -8,7 +8,7 @@ service Auction {
     rpc Bid (SetBid) returns (AckBid) {}
     rpc Result (GetResult) returns (ReturnResult) {}
     rpc GetHeartBeat(Request)returns (BeatAck){}
-    
+    rpc UpdateBid(SetBid) returns (AckBid){}
 }
 
 message Request {
@@ -22,6 +22,7 @@ message BeatAck {
 
 message SetBid {
     int32 amount = 1;
+    string highestBidderId = 2;
 }
 
 message AckBid {
@@ -35,4 +36,5 @@ message GetResult {
 message ReturnResult {
     int32 outcome = 1;
     string message = 2;
+    string highestBidderId = 3;
 }

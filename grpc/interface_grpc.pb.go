@@ -25,6 +25,7 @@ type AuctionClient interface {
 	Bid(ctx context.Context, in *SetBid, opts ...grpc.CallOption) (*AckBid, error)
 	Result(ctx context.Context, in *GetResult, opts ...grpc.CallOption) (*ReturnResult, error)
 	GetHeartBeat(ctx context.Context, in *Request, opts ...grpc.CallOption) (*BeatAck, error)
+	UpdateBid(ctx context.Context, in *SetBid, opts ...grpc.CallOption) (*AckBid, error)
 }
 
 type auctionClient struct {
@@ -62,6 +63,15 @@ func (c *auctionClient) GetHeartBeat(ctx context.Context, in *Request, opts ...g
 	return out, nil
 }
 
+func (c *auctionClient) UpdateBid(ctx context.Context, in *SetBid, opts ...grpc.CallOption) (*AckBid, error) {
+	out := new(AckBid)
+	err := c.cc.Invoke(ctx, "/auction.Auction/UpdateBid", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuctionServer is the server API for Auction service.
 // All implementations must embed UnimplementedAuctionServer
 // for forward compatibility
@@ -69,6 +79,7 @@ type AuctionServer interface {
 	Bid(context.Context, *SetBid) (*AckBid, error)
 	Result(context.Context, *GetResult) (*ReturnResult, error)
 	GetHeartBeat(context.Context, *Request) (*BeatAck, error)
+	UpdateBid(context.Context, *SetBid) (*AckBid, error)
 	mustEmbedUnimplementedAuctionServer()
 }
 
@@ -84,6 +95,9 @@ func (UnimplementedAuctionServer) Result(context.Context, *GetResult) (*ReturnRe
 }
 func (UnimplementedAuctionServer) GetHeartBeat(context.Context, *Request) (*BeatAck, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetHeartBeat not implemented")
+}
+func (UnimplementedAuctionServer) UpdateBid(context.Context, *SetBid) (*AckBid, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateBid not implemented")
 }
 func (UnimplementedAuctionServer) mustEmbedUnimplementedAuctionServer() {}
 
@@ -152,6 +166,24 @@ func _Auction_GetHeartBeat_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Auction_UpdateBid_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetBid)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuctionServer).UpdateBid(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/auction.Auction/UpdateBid",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuctionServer).UpdateBid(ctx, req.(*SetBid))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Auction_ServiceDesc is the grpc.ServiceDesc for Auction service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -170,6 +202,10 @@ var Auction_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetHeartBeat",
 			Handler:    _Auction_GetHeartBeat_Handler,
+		},
+		{
+			MethodName: "UpdateBid",
+			Handler:    _Auction_UpdateBid_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
