@@ -1,0 +1,27 @@
+2022/11/28 22:56:34 RMServer 5001: Trying to dial: 5002
+2022/11/28 22:56:35 RMServer 5002: Trying to dial: 5001
+2022/11/28 22:56:35 RMServer 5002: Trying to dial: 5003
+2022/11/28 22:56:35 RMServer 5001: Trying to dial: 5003
+2022/11/28 22:56:37 RMServer 5003: Trying to dial: 5001
+2022/11/28 22:56:37 RMServer 5003: Trying to dial: 5002
+2022/11/28 22:56:40 FEServer 4002: Server on port 4002: Listening at [::]:4002
+2022/11/28 22:56:40 FEServer 4002: We are trying to listen calls from client: 4002
+2022/11/28 22:56:40 FEServer 4002: Connection established with Primary Replica.
+2022/11/28 22:56:41 FEServer 4001: Server on port 4001: Listening at [::]:4001
+2022/11/28 22:56:41 FEServer 4001: We are trying to listen calls from client: 4001
+2022/11/28 22:56:41 FEServer 4001: Connection established with Primary Replica.
+2022/11/28 22:57:04 RMServer 5002: Replica Manager updated. Value: %!(EXTRA int32=30)
+2022/11/28 22:57:04 RMServer 5001: Bid updated on replica manager on port %!s(int32=5002) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"updated")
+2022/11/28 22:57:04 RMServer 5003: Replica Manager updated. Value: %!(EXTRA int32=30)
+2022/11/28 22:57:04 RMServer 5001: Bid updated on replica manager on port %!s(int32=5003) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"updated")
+2022/11/28 22:57:04 Client :4001: Bid response: %!(EXTRA string=Success: Highest bid updated)
+2022/11/28 22:57:10 Client :4002: Bid response: %!(EXTRA string=Failure: Bid wasn't enough big)
+2022/11/28 22:57:22 Client :4001: Bid response: %!(EXTRA string=Failure: Bid wasn't enough big)
+2022/11/28 22:57:26 RMServer 5001: Something went wrong when updating bid to 5002
+2022/11/28 22:57:26 RMServer 5001: Exception, Replica Manager on port 5002 died
+2022/11/28 22:57:26 RMServer 5001: Bid updated on replica manager on port %!s(int32=5002) with ack: %!(EXTRA *auction.AckBid=<nil>)
+2022/11/28 22:57:26 RMServer 5003: Replica Manager updated. Value: %!(EXTRA int32=40)
+2022/11/28 22:57:26 RMServer 5001: Bid updated on replica manager on port %!s(int32=5003) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"updated")
+2022/11/28 22:57:26 Client :4001: Bid response: %!(EXTRA string=Success: Highest bid updated)
+2022/11/28 22:57:31 RMServer 5001: Outcome inside Result: %!(EXTRA int32=40)
+2022/11/28 22:57:31 Client :4002: The auction is ongoing. The result of the auction is: 40

@@ -1,0 +1,45 @@
+2022/11/28 22:53:10 RMServer 5001: Trying to dial: 5002
+2022/11/28 22:53:10 RMServer 5002: Trying to dial: 5001
+2022/11/28 22:53:10 RMServer 5002: Trying to dial: 5003
+2022/11/28 22:53:11 RMServer 5001: Trying to dial: 5003
+2022/11/28 22:53:12 RMServer 5003: Trying to dial: 5001
+2022/11/28 22:53:12 RMServer 5003: Trying to dial: 5002
+2022/11/28 22:53:15 FEServer 4002: Server on port 4002: Listening at [::]:4002
+2022/11/28 22:53:15 FEServer 4002: We are trying to listen calls from client: 4002
+2022/11/28 22:53:15 FEServer 4002: Connection established with Primary Replica.
+2022/11/28 22:53:17 FEServer 4001: Server on port 4001: Listening at [::]:4001
+2022/11/28 22:53:17 FEServer 4001: We are trying to listen calls from client: 4001
+2022/11/28 22:53:17 FEServer 4001: Connection established with Primary Replica.
+2022/11/28 22:53:28 RMServer 5003: Replica Manager updated. Value: %!(EXTRA int32=10)
+2022/11/28 22:53:28 RMServer 5001: Bid updated on replica manager on port %!s(int32=5003) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"updated")
+2022/11/28 22:53:28 RMServer 5002: Replica Manager updated. Value: %!(EXTRA int32=10)
+2022/11/28 22:53:28 RMServer 5001: Bid updated on replica manager on port %!s(int32=5002) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"updated")
+2022/11/28 22:53:28 Client :4001: Bid response: %!(EXTRA string=Success: Highest bid updated)
+2022/11/28 22:53:32 RMServer 5002: Replica Manager updated. Value: %!(EXTRA int32=20)
+2022/11/28 22:53:32 RMServer 5001: Bid updated on replica manager on port %!s(int32=5002) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"updated")
+2022/11/28 22:53:32 RMServer 5003: Replica Manager updated. Value: %!(EXTRA int32=20)
+2022/11/28 22:53:32 RMServer 5001: Bid updated on replica manager on port %!s(int32=5003) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"updated")
+2022/11/28 22:53:32 Client :4002: Bid response: %!(EXTRA string=Success: Highest bid updated)
+2022/11/28 22:54:05 Client :4001: Bid failed: %!(EXTRA *status.Error=rpc error: code = Unavailable desc = connection error: desc = "transport: Error while dialing dial tcp :4001: connect: connection refused")
+2022/11/28 22:54:05 Client :4001: FEServer has died
+2022/11/28 22:54:05 Client: FEServer on port :4001 is not listening anymore. It has died
+2022/11/28 22:54:05 Client: Redialing to new port: :4002
+2022/11/28 22:54:05 Client: Client has connected to new FEServer on port :4002
+2022/11/28 22:54:05 RMServer 5002: Replica Manager updated. Value: %!(EXTRA int32=30)
+2022/11/28 22:54:05 RMServer 5001: Bid updated on replica manager on port %!s(int32=5002) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"updated")
+2022/11/28 22:54:05 RMServer 5003: Replica Manager updated. Value: %!(EXTRA int32=30)
+2022/11/28 22:54:05 RMServer 5001: Bid updated on replica manager on port %!s(int32=5003) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"updated")
+2022/11/28 22:54:05 Client :4001: Bid response: %!(EXTRA string=Success: Highest bid updated)
+2022/11/28 22:54:12 RMServer 5001: Outcome inside Result: %!(EXTRA int32=30)
+2022/11/28 22:54:12 Client :4002: The auction is ongoing. The result of the auction is: 30
+2022/11/28 22:54:21 RMServer 5002: Replica Manager updated. Value: %!(EXTRA int32=50)
+2022/11/28 22:54:21 RMServer 5001: Bid updated on replica manager on port %!s(int32=5002) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"updated")
+2022/11/28 22:54:21 RMServer 5003: Replica Manager updated. Value: %!(EXTRA int32=50)
+2022/11/28 22:54:21 RMServer 5001: Bid updated on replica manager on port %!s(int32=5003) with ack: %!(EXTRA *auction.AckBid=acknowledgement:"updated")
+2022/11/28 22:54:21 Client :4002: Bid response: %!(EXTRA string=Success: Highest bid updated)
+2022/11/28 22:54:31 RMServer 5001: Outcome inside Result: %!(EXTRA int32=50)
+2022/11/28 22:54:31 Client :4002: The auction is ongoing. The result of the auction is: 50
+2022/11/28 22:54:46 RMServer 5001: Outcome inside Result: %!(EXTRA int32=50)
+2022/11/28 22:54:46 Client :4002: The auction is ongoing. The result of the auction is: 50
+2022/11/28 22:55:38 RMServer 5001: Outcome inside Result: %!(EXTRA int32=50)
+2022/11/28 22:55:38 Client :4002: Time is out. The result of the auction is: 50
